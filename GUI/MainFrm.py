@@ -52,8 +52,6 @@ class E_MainWindow(QMainWindow):
 
 
     def InitCentralWidget(self):
-
-
         MainLayout = QHBoxLayout()
         self.m_centralWidget.setLayout(MainLayout)
 
@@ -61,15 +59,25 @@ class E_MainWindow(QMainWindow):
         for i in range(2):
             MainLayout.addWidget(self.m_vtkWidget[i])
 
+        #dock widget
+        dockwidget = QDockWidget("Log Area")
+        dockwidget.setFeatures(QDockWidget.DockWidgetMovable)
+
+        self.m_logWidget = QPlainTextEdit()
+        dockwidget.setWidget(self.m_logWidget)
+        self.addDockWidget(Qt.BottomDockWidgetArea, dockwidget)
+
 
     def InitManager(self):
         self.Mgr = E_Manager(self)
 
 
     def onImportObject(self):
-        path = QFileDialog.getOpenFileName(self, "Import 3D Objects", "./", "Object Files(*.stl)")
+        self.Mgr.SetLog('Import 3d Object')
 
+        path = QFileDialog.getOpenFileName(self, "Import 3D Objects", "./", "Object Files(*.stl)")
+        
         self.Mgr.ImportObject(path[0])
 
     def onTrainData(self):
-        self.Mgr.TrainData();
+        self.Mgr.TrainData()

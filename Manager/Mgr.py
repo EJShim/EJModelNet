@@ -1,4 +1,5 @@
 import vtk
+import os
 # from InteractorStyle import E_InteractorStyle
 
 class E_Manager:
@@ -19,11 +20,10 @@ class E_Manager:
 
 
         #Initialize
-        self.InitObject()
+        #self.InitObject()
 
 
     def InitObject(self):
-
         cylinder = vtk.vtkCylinderSource()
         cylinder.SetResolution(8)
 
@@ -46,7 +46,34 @@ class E_Manager:
 
 
     def ImportObject(self, path):
-        print(path)
+        self.SetLog(path)
+
+        filename, file_extension = os.path.splitext(path)
+
+        if file_extension == ".stl":
+
+            #Remove All Actors
+            self.renderer[0].RemoveAllViewProps()
+
+            reader = vtk.vtkSTLReader()
+            reader.SetFileName(path)
+            reader.Update()
+
+            mapper = vtk.vtkPolyDataMapper()
+            mapper.SetInputConnection(reader.GetOutputPort())
+
+            actor = vtk.vtkActor()
+            actor.SetMapper(mapper)
+
+            self.renderer[0].AddActor(actor)
+            self.renderer[0].ResetCamera()
+            self.Redraw()
+
+        else:
+            self.SetLog('NNONO')
 
     def TrainData(self):
         print("Train Data")
+
+    def SetLog(self, text):
+        self.mainFrm.m_logWidget.appendPlainText(text)
