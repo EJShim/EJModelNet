@@ -32,6 +32,10 @@ class E_Manager:
 
         self.bInitNetowrk = False
 
+        #Test function
+        self.predFunc = None
+        self.testFunc = None
+
         for i in range(2):
             interactor = E_InteractorStyle(self, i)
 
@@ -211,7 +215,7 @@ class E_Manager:
 
         #Compile Functions
         self.SetLog('Compiling Theano Functions..')
-        tfuncs, tvars, model = self.MakeFunctions(cfg, model)
+        self.testFunc, tvars, model, self.predFunc = self.MakeFunctions(cfg, model)
 
 
         #Load Weights
@@ -230,6 +234,7 @@ class E_Manager:
         xt = np.asarray(np.load(modelPath)['features'], dtype=np.float32)
         yt = np.asarray(np.load(modelPath)['targets'], dtype=np.float32)
 
+
         #Get Random
         randIdx = random.randint(0, len(xt))
 
@@ -237,9 +242,14 @@ class E_Manager:
         self.DrawVoxelArray(xt[randIdx])
 
 
+        log = "Ground Truth : " + str(yt[randIdx])
+        self.SetLog(log)
+
         #Predict Object
         if self.bInitNetowrk:
-            self.SetLog('Run Prediction')
+            pred = self.predFunc(xt[randIdx].reshape(1, 1, 32, 32, 32))
+            log = "Predict Result : " + str(pred)
+            self.SetLog(log)
         else:
             self.SetLog('Network Need to be Initialized')
             return
@@ -256,7 +266,7 @@ class E_Manager:
         #shared variable for input array
         X_shared = lasagne.utils.shared_empty(5, dtype='float32')
 
-        #Class Vectort
+        #Class Vector
         y = T.TensorType('int32', [False]*1)('y')
 
         #Shared Variable for class vector
@@ -269,7 +279,6 @@ class E_Manager:
         #Batch Parameters
         batch_index = T.iscalar('batch_index')
         test_batch_slice = slice(batch_index*cfg['n_rotations'], (batch_index+1)*cfg['n_rotations'])
-        test_batch_i = batch_index
 
         #Get Output
         y_hat_deterministic = lasagne.layers.get_output(l_out, X, deterministic=True)
@@ -283,11 +292,13 @@ class E_Manager:
         #Compile Functions
         test_error_fn = theano.function([batch_index], [classifier_test_error_rate, pred], givens={X:X_shared[test_batch_slice], y:T.cast(y_shared[test_batch_slice], 'int32')})
 
+        pred_fn = theano.function([X], pred)
+
         tfuncs = {'test_function':test_error_fn}
         tvars = {'X':X, 'y':y, 'X_shared':X_shared, 'y_shared':y_shared}
 
 
-        return tfuncs, tvars, model
+        return tfuncs, tvars, model, pred_fn
 
     def DrawVoxelArray(self, arrayBuffer):
         #reshape
