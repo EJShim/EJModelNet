@@ -1,6 +1,9 @@
+# -*- coding: utf-8 -*-
+
+import sys
 from PyQt5.QtWidgets import *
 from GUI.MainFrm import E_MainWindow
-import sys
+
 
 app = QApplication([])
 

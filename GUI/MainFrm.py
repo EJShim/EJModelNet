@@ -5,7 +5,6 @@ import vtk
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 import sys, os
-sys.path.insert(0, os.getcwd() + "/../")
 from Manager.Mgr import E_Manager
 
 
@@ -46,9 +45,14 @@ class E_MainWindow(QMainWindow):
         importAction.triggered.connect(self.onImportObject)
         toolbar.addAction(importAction)
 
-        trainAction = QAction(QIcon(iconPath + "/051-pantone-2.png"), "Train Data", self)
-        trainAction.triggered.connect(self.onTrainData)
-        toolbar.addAction(trainAction)
+        self.trainAction = QAction(QIcon(iconPath + "/051-pantone-2.png"), "Initialize Network", self)
+        self.trainAction.triggered.connect(self.onInitNetwork)
+        toolbar.addAction(self.trainAction)
+
+        predAction = QAction(QIcon(iconPath + "/051-programming.png"), "Predict Random", self)
+        predAction.triggered.connect(self.onRandomPred)
+        toolbar.addAction(predAction)
+
 
 
     def InitCentralWidget(self):
@@ -76,8 +80,11 @@ class E_MainWindow(QMainWindow):
         self.Mgr.SetLog('Import 3d Object')
 
         path = QFileDialog.getOpenFileName(self, "Import 3D Objects", "./", "Object Files(*.stl)")
-        
+
         self.Mgr.ImportObject(path[0])
 
-    def onTrainData(self):
-        self.Mgr.TrainData()
+    def onInitNetwork(self):
+        self.Mgr.InitNetwork()
+
+    def onRandomPred(self):
+        self.Mgr.RandomPrediction()
