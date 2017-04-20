@@ -38,6 +38,7 @@ class E_Manager:
         self.predList = None
         self.testFunc = None
 
+
         # print(len(labels.label))
 
         for i in range(2):
@@ -51,7 +52,7 @@ class E_Manager:
 
 
         #Initialize
-        # self.InitObject()
+        self.InitTextActor()
 
 
     def InitObject(self):
@@ -73,6 +74,27 @@ class E_Manager:
 
         self.Redraw();
 
+    def InitTextActor(self):
+        self.groundTruthLog = vtk.vtkTextActor()
+        self.groundTruthLog.SetInput("Label")
+        self.groundTruthLog.SetPosition(10, 60)
+        self.groundTruthLog.GetTextProperty().SetFontSize(24)
+        self.groundTruthLog.GetTextProperty().SetColor(1.0, 0.0, 0.0)
+
+
+        self.predLog = vtk.vtkTextActor()
+        self.predLog.SetInput("Predicted")
+        self.predLog.SetPosition(10, 30)
+        self.predLog.GetTextProperty().SetFontSize(24)
+        self.predLog.GetTextProperty().SetColor(0.0, 1.0, 0.0)
+
+
+        self.renderer[1].AddActor2D(self.groundTruthLog)
+        self.renderer[1].AddActor2D(self.predLog)
+
+
+
+
     def VoxelizeObject(self, source):
 
         #Set Voxel Space Resolution nxnxn
@@ -90,6 +112,8 @@ class E_Manager:
 
         #Calculate Spacing
         spacingVal = maxB / resolution
+
+        print('Spacing Value : ', spacingVal)
         spacing = [spacingVal, spacingVal, spacingVal]
 
         bounds = [center[0] - resolution * spacing[0] / 2, center[0] + resolution * spacing[0] / 2,center[1] - resolution * spacing[1] / 2, center[1] + resolution * spacing[2] / 2, center[2] - resolution * spacing[2] / 2, center[2] + resolution * spacing[0] / 2]
@@ -124,6 +148,8 @@ class E_Manager:
         scalarData = vtk_to_numpy( imgstenc.GetOutput().GetPointData().GetScalars() )
         # print(scalarData)
         self.DrawVoxelArray(scalarData)
+
+        self.PredictObject(scalarData)
 
         # self.AddVolumeData(imgstenc.GetOutputPort())
 
@@ -183,7 +209,7 @@ class E_Manager:
         if file_extension == ".stl":
 
             #Remove All Actors
-            self.renderer[0].RemoveAllViewProps()
+            self.ClearScene()
 
             reader = vtk.vtkSTLReader()
             reader.SetFileName(path)
@@ -201,6 +227,28 @@ class E_Manager:
             self.renderer[0].AddActor(actor)
             self.renderer[0].ResetCamera()
             self.Redraw()
+
+        elif file_extension == ".obj":
+            #Remove All Actors
+            self.ClearScene()
+
+            reader = vtk.vtkOBJReader()
+            reader.SetFileName(path)
+            reader.Update()
+
+
+            self.VoxelizeObject(reader)
+
+            mapper = vtk.vtkPolyDataMapper()
+            mapper.SetInputConnection(reader.GetOutputPort())
+
+            actor = vtk.vtkActor()
+            actor.SetMapper(mapper)
+
+            self.renderer[0].AddActor(actor)
+            self.renderer[0].ResetCamera()
+            self.Redraw()
+
 
         else:
             self.SetLog('File Extension Not Supported')
@@ -246,18 +294,31 @@ class E_Manager:
         self.DrawVoxelArray(xt[randIdx])
 
 
-        log = "Ground Truth : " + labels.label[int(yt[randIdx])]
-        self.SetLog(log)
+        log = labels.label[int(yt[randIdx])]
+
+        #Predict 3D object
+        self.PredictObject(xt[randIdx], log)
+
+
+
+    def PredictObject(self, inputData, groundTruth = "unknown"):
 
         #Predict Object
         if self.bInitNetowrk:
-            pred = self.predFunc(xt[randIdx].reshape(1, 1, 32, 32, 32))
-            pList = self.predList(xt[randIdx].reshape(1, 1, 32, 32, 32))
-            log = "Predict Result : " + labels.label[int(pred)] + " -> " + str(pList[0][int(pred)] * 100.0) + "%"
-            self.SetLog(log)
+            inputData = np.asarray(inputData.reshape(1, 1, 32, 32, 32), dtype=np.float32)
+            inputData = 4.0 * inputData - 1.0
 
-            print(pList)
-            # print(pList[0][int(pred)])
+            pred = self.predFunc(inputData)
+            pList = self.predList(inputData)
+
+            #Show Log
+            gtlog = "Label : " + groundTruth
+            self.groundTruthLog.SetInput(gtlog)
+            log = "Predicted : " + labels.label[int(pred)] + " -> " + str(pList[0][int(pred)] * 100.0) + "%"
+            self.predLog.SetInput(log)
+
+            self.Redraw()
+
         else:
             self.SetLog('Network Need to be Initialized')
             return
@@ -334,19 +395,24 @@ class E_Manager:
         self.SetLog("Run Generative Mode")
 
     def SyncCamera(self, idx):
-        other = 1
-        if idx == 1: other = 0
-
-        cam1 = self.renderer[idx].GetActiveCamera()
-        cam2 = self.renderer[other].GetActiveCamera()
-
-        cam2.DeepCopy(cam1)
-
-        self.Redraw()
+        # other = 1
+        # if idx == 1: other = 0
+        #
+        # cam1 = self.renderer[idx].GetActiveCamera()
+        # cam2 = self.renderer[other].GetActiveCamera()
+        #
+        # cam2.DeepCopy(cam1)
+        #
+        # self.Redraw()
+        return
 
     def ClearScene(self):
         for i in range(2):
             self.renderer[i].RemoveAllViewProps()
+
+            #Add Log Actors
+            self.renderer[1].AddActor2D(self.groundTruthLog)
+            self.renderer[1].AddActor2D(self.predLog)
 
     def SetLog(self, text):
         QApplication.processEvents()
