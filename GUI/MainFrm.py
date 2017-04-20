@@ -67,7 +67,10 @@ class E_MainWindow(QMainWindow):
         dockwidget = QDockWidget("Log Area")
         dockwidget.setFeatures(QDockWidget.DockWidgetMovable)
 
+        font = QFont()
+        font.setPointSize(16)
         self.m_logWidget = QPlainTextEdit()
+        self.m_logWidget.setFont(font)
         dockwidget.setWidget(self.m_logWidget)
         self.addDockWidget(Qt.BottomDockWidgetArea, dockwidget)
 

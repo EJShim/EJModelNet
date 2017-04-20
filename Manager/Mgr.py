@@ -15,6 +15,7 @@ import lasagne
 #utils
 from utils import checkpoints
 from Manager.InteractorStyle import E_InteractorStyle
+from NetworkData import labels
 
 v_res = 3
 dim = 32
@@ -34,7 +35,10 @@ class E_Manager:
 
         #Test function
         self.predFunc = None
+        self.predList = None
         self.testFunc = None
+
+        # print(len(labels.label))
 
         for i in range(2):
             interactor = E_InteractorStyle(self, i)
@@ -215,7 +219,7 @@ class E_Manager:
 
         #Compile Functions
         self.SetLog('Compiling Theano Functions..')
-        self.testFunc, tvars, model, self.predFunc = self.MakeFunctions(cfg, model)
+        self.testFunc, tvars, model, self.predFunc, self.predList = self.MakeFunctions(cfg, model)
 
 
         #Load Weights
@@ -242,14 +246,18 @@ class E_Manager:
         self.DrawVoxelArray(xt[randIdx])
 
 
-        log = "Ground Truth : " + str(yt[randIdx])
+        log = "Ground Truth : " + labels.label[int(yt[randIdx])]
         self.SetLog(log)
 
         #Predict Object
         if self.bInitNetowrk:
             pred = self.predFunc(xt[randIdx].reshape(1, 1, 32, 32, 32))
-            log = "Predict Result : " + str(pred)
+            pList = self.predList(xt[randIdx].reshape(1, 1, 32, 32, 32))
+            log = "Predict Result : " + labels.label[int(pred)] + " -> " + str(pList[0][int(pred)] * 100.0) + "%"
             self.SetLog(log)
+
+            print(pList)
+            # print(pList[0][int(pred)])
         else:
             self.SetLog('Network Need to be Initialized')
             return
@@ -272,7 +280,6 @@ class E_Manager:
         #Shared Variable for class vector
         y_shared = lasagne.utils.shared_empty(1, dtype='float32')
 
-
         #Output Layer
         l_out = model['l_out']
 
@@ -282,6 +289,7 @@ class E_Manager:
 
         #Get Output
         y_hat_deterministic = lasagne.layers.get_output(l_out, X, deterministic=True)
+        softmax = T.nnet.softmax(y_hat_deterministic)
 
         #Average Across Rotation Examples
         pred = T.argmax(T.sum(y_hat_deterministic, axis=0))
@@ -293,12 +301,13 @@ class E_Manager:
         test_error_fn = theano.function([batch_index], [classifier_test_error_rate, pred], givens={X:X_shared[test_batch_slice], y:T.cast(y_shared[test_batch_slice], 'int32')})
 
         pred_fn = theano.function([X], pred)
+        pred_list = theano.function([X], softmax)
 
         tfuncs = {'test_function':test_error_fn}
         tvars = {'X':X, 'y':y, 'X_shared':X_shared, 'y_shared':y_shared}
 
 
-        return tfuncs, tvars, model, pred_fn
+        return tfuncs, tvars, model, pred_fn, pred_list
 
     def DrawVoxelArray(self, arrayBuffer):
         #reshape
