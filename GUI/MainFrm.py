@@ -82,7 +82,7 @@ class E_MainWindow(QMainWindow):
     def onImportObject(self):
         self.Mgr.SetLog('Import 3d Object')
 
-        path = QFileDialog.getOpenFileName(self, "Import 3D Objects", "./", "Object Files(*.stl)")
+        path = QFileDialog.getOpenFileName(self, "Import 3D Objects", "./", "Object Files(*.stl *.obj) ;; Object Files(*.stl) ;; Object Files(*.obj)")
 
         self.Mgr.ImportObject(path[0])
 

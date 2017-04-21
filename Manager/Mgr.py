@@ -52,26 +52,30 @@ class E_Manager:
 
 
         #Initialize
+        self.InitObject()
         self.InitTextActor()
 
 
     def InitObject(self):
-        cylinder = vtk.vtkCylinderSource()
-        cylinder.SetResolution(80)
+        axis = [0, 0]
+        self.orWidget = [0, 0]
 
-        self.VoxelizeObject(cylinder)
+        for i in range(len(axis)):
+            axis[i] = vtk.vtkAxesActor()
 
-        cylinderMapper = vtk.vtkPolyDataMapper()
-        cylinderMapper.SetInputConnection(cylinder.GetOutputPort())
+            self.orWidget[i] = vtk.vtkOrientationMarkerWidget()
 
-        cylinderActor = vtk.vtkActor()
-        cylinderActor.SetMapper(cylinderMapper)
-        cylinderActor.RotateX(30.0)
-        cylinderActor.RotateY(-45.9)
+            self.orWidget[i].SetOutlineColor(0.9300, 0.5700, 0.1300)
+            self.orWidget[i].SetOrientationMarker(axis[i])
+            self.orWidget[i].SetInteractor(  self.mainFrm.m_vtkWidget[i].GetRenderWindow().GetInteractor() )
+            self.orWidget[i].SetViewport(0.0, 0.0, 0.3, 0.3)
 
-        self.renderer[0].AddActor(cylinderActor)
-        self.renderer[0].ResetCamera()
 
+            # self.renderer[i].AddActor(axis[i])
+
+
+        # self.renderer[0].AddActor(cylinderActor)
+        # self.renderer[0].ResetCamera()
         self.Redraw();
 
     def InitTextActor(self):
@@ -96,12 +100,22 @@ class E_Manager:
 
 
     def VoxelizeObject(self, source):
+        #Transform Polydata around Z-axis
+        trans = vtk.vtkTransform()
+        trans.RotateWXYZ(-90.0, 0, 0, 1.0)
+        transFilter = vtk.vtkTransformPolyDataFilter()
+        transFilter.SetTransform(trans)
+        transFilter.SetInputConnection(source.GetOutputPort())
+        transFilter.Update()
+
+        poly = vtk.vtkPolyData()
+        poly.DeepCopy(transFilter.GetOutput())
 
         #Set Voxel Space Resolution nxnxn
         resolution = 32
         bounds = [0, 0, 0, 0, 0, 0]
-        center = source.GetOutput().GetCenter()
-        source.GetOutput().GetBounds(bounds)
+        center = poly.GetCenter()
+        poly.GetBounds(bounds)
 
 
         #Get Maximum Boundary Length
@@ -132,7 +146,7 @@ class E_Manager:
             imgData.GetPointData().GetScalars().SetTuple1(i, 1)
 
         pol2stenc = vtk.vtkPolyDataToImageStencil()
-        pol2stenc.SetInputData(source.GetOutput())
+        pol2stenc.SetInputData(poly)
         pol2stenc.SetOutputOrigin(origin)
         pol2stenc.SetOutputSpacing(spacing)
         pol2stenc.SetOutputWholeExtent(imgData.GetExtent())
@@ -156,6 +170,7 @@ class E_Manager:
     def AddVolumeData(self, source):
         self.ClearScene()
 
+
         # Prepare color and transparency values
         colorFunc = vtk.vtkColorTransferFunction()
         alphaChannelFunc = vtk.vtkPiecewiseFunction()
@@ -166,11 +181,10 @@ class E_Manager:
         # alphaChannelFunc.AddPoint(192,0.5)
         # alphaChannelFunc.AddPoint(255,1.0)
 
-        colorFunc.AddRGBPoint(0, 0.0, 0.0, 0.0)
-        colorFunc.AddRGBPoint(1, 0.0, 0.0, 1.0)
-        colorFunc.AddRGBPoint(128,1.0,0.0,0.0)
-        colorFunc.AddRGBPoint(192, 1.0,0.0,0.7)
-        colorFunc.AddRGBPoint(255,0.0,0.1,0.0)
+        colorFunc.AddRGBPoint(0, 0.0, 0.0, 1.0)
+        # colorFunc.AddRGBPoint(128,1.0,0.0,0.0)
+        # colorFunc.AddRGBPoint(192, 1.0,0.0,0.7)
+        colorFunc.AddRGBPoint(255,0.0,1.0,0.0)
 
         # Prepare volume properties.
         volumeProperty = vtk.vtkVolumeProperty()
@@ -178,6 +192,7 @@ class E_Manager:
         volumeProperty.SetScalarOpacity(alphaChannelFunc)
         volumeProperty.ShadeOn() # Keep this on unless you want everything to look terrible
         volumeProperty.SetInterpolationTypeToNearest()
+
 
         #Mapper
         volumeMapper = vtk.vtkSmartVolumeMapper()
@@ -198,6 +213,7 @@ class E_Manager:
     def Redraw(self):
         for i in range(2):
             self.mainFrm.m_vtkWidget[i].GetRenderWindow().Render()
+            self.orWidget[i].SetEnabled(1)
 
 
 
@@ -374,7 +390,7 @@ class E_Manager:
         #reshape
 
         sample = arrayBuffer.reshape(1, 1, 32, 32, 32)
-        dataMatrix = self.MakeDataMatrix( np.asarray(sample, dtype=np.uint8), 128)
+        dataMatrix = self.MakeDataMatrix( np.asarray(sample, dtype=np.uint8), 255)
         data_string = dataMatrix.tostring()
 
 
@@ -386,6 +402,23 @@ class E_Manager:
         dataImporter.SetWholeExtent(0, int(dim * v_res)-1, 0, int(dim * v_res)-1, 0, int(dim * v_res)-1)
 
         self.AddVolumeData(dataImporter.GetOutputPort())
+        #Display BoundignBox
+        boundingBox = vtk.vtkOutlineFilter()
+        boundingBox.SetInputData(dataImporter.GetOutput())
+
+        bbmapper = vtk.vtkPolyDataMapper()
+        bbmapper.SetInputConnection(boundingBox.GetOutputPort())
+
+        bbActor = vtk.vtkActor()
+        bbActor.SetMapper(bbmapper)
+        bbActor.GetProperty().SetColor(1, 0, 0)
+
+        self.renderer[1].AddActor(bbActor)
+
+        self.Redraw()
+
+
+
 
 
     def RunGenerativeMode(self):
