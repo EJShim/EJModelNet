@@ -45,6 +45,11 @@ class E_MainWindow(QMainWindow):
         importAction.triggered.connect(self.onImportObject)
         toolbar.addAction(importAction)
 
+        #Import Volume addAction
+        volumeAction = QAction(QIcon(iconPath + "/051-document.png"), "Import Volume", self)
+        volumeAction.triggered.connect(self.onImportVolume)
+        toolbar.addAction(volumeAction)
+
         self.trainAction = QAction(QIcon(iconPath + "/051-pantone-2.png"), "Initialize Network", self)
         self.trainAction.triggered.connect(self.onInitNetwork)
         toolbar.addAction(self.trainAction)
@@ -82,9 +87,19 @@ class E_MainWindow(QMainWindow):
     def onImportObject(self):
         self.Mgr.SetLog('Import 3d Object')
 
-        path = QFileDialog.getOpenFileName(self, "Import 3D Objects", "./", "Object Files(*.stl *.obj) ;; Object Files(*.stl) ;; Object Files(*.obj)")
-
+        path = QFileDialog.getOpenFileName(self, "Import 3D Objects", "~/", "Object Files(*.stl *.obj) ;; Object Files(*.stl) ;; Object Files(*.obj)")
         self.Mgr.ImportObject(path[0])
+
+    def onImportVolume(self):
+        self.Mgr.SetLog('import Volume')
+
+        path = QFileDialog.getOpenFileNames(self, "Import 3D Objects", "~/", "Dicom File(*.dcm)")
+        fileSeries = path[0]
+
+        if len(fileSeries) == 0: return
+
+        #Import Volume
+        self.Mgr.VolumeMgr.ImportVolume(fileSeries)
 
     def onInitNetwork(self):
         self.Mgr.InitNetwork()

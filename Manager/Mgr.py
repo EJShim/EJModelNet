@@ -15,9 +15,10 @@ import lasagne
 #utils
 from utils import checkpoints
 from Manager.InteractorStyle import E_InteractorStyle
+from Manager.VolumeMgr import E_VolumeManager
 from NetworkData import labels
 
-v_res = 3
+v_res = 1
 dim = 32
 
 #define argument path
@@ -29,6 +30,10 @@ modelPath = rootPath + "\\NetworkData\\modelnet40_rot_test.npz"
 class E_Manager:
     def __init__(self, mainFrm):
         self.mainFrm = mainFrm
+
+        #Initialize Managers
+        self.VolumeMgr = E_VolumeManager(self)
+
         self.renderer = [0, 0]
 
         self.bInitNetowrk = False
@@ -126,8 +131,6 @@ class E_Manager:
 
         #Calculate Spacing
         spacingVal = maxB / resolution
-
-        print('Spacing Value : ', spacingVal)
         spacing = [spacingVal, spacingVal, spacingVal]
 
         bounds = [center[0] - resolution * spacing[0] / 2, center[0] + resolution * spacing[0] / 2,center[1] - resolution * spacing[1] / 2, center[1] + resolution * spacing[2] / 2, center[2] - resolution * spacing[2] / 2, center[2] + resolution * spacing[0] / 2]
@@ -169,7 +172,6 @@ class E_Manager:
 
     def AddVolumeData(self, source):
         self.ClearScene()
-
 
         # Prepare color and transparency values
         colorFunc = vtk.vtkColorTransferFunction()
