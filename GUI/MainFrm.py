@@ -6,6 +6,7 @@ from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 import sys, os
 from Manager.Mgr import E_Manager
+from GUI.VolumeRenderingWidget import E_VolumeRenderingWidget
 
 
 iconPath = "D:/Projects/EJModelNet/icons"
@@ -27,36 +28,58 @@ class E_MainWindow(QMainWindow):
 
 
         #Initialize
+
         self.InitToolbar()
         self.InitCentralWidget()
         self.InitManager()
 
+
     def InitToolbar(self):
         #ToolBar
         toolbar = QToolBar()
-        toolbar.setIconSize(QSize(58, 58))
-        toolbar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
 
-        #Add Toolbar to the MainWindow
         self.addToolBar(toolbar)
+
+
+        mainTab = QTabWidget()
+        toolbar.addWidget(mainTab)
+
+
+        objectToolbar = QToolBar();
+        objectToolbar.setIconSize(QSize(58, 58))
+        objectToolbar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        mainTab.addTab(objectToolbar, "3D Objects")
 
         #Import Object Action
         importAction = QAction(QIcon(iconPath + "/051-cmyk.png"), "Import Object", self)
         importAction.triggered.connect(self.onImportObject)
-        toolbar.addAction(importAction)
+        objectToolbar.addAction(importAction)
 
         #Import Volume addAction
         volumeAction = QAction(QIcon(iconPath + "/051-document.png"), "Import Volume", self)
         volumeAction.triggered.connect(self.onImportVolume)
-        toolbar.addAction(volumeAction)
+        objectToolbar.addAction(volumeAction)
+        objectToolbar.addSeparator()
+
+        self.volumeWidget = E_VolumeRenderingWidget()
+        objectToolbar.addWidget(self.volumeWidget)
+
+
+
+
+        networkToolbar = QToolBar();
+        networkToolbar.setIconSize(QSize(58, 58))
+        networkToolbar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        mainTab.addTab(networkToolbar, "VRN")
 
         self.trainAction = QAction(QIcon(iconPath + "/051-pantone-2.png"), "Initialize Network", self)
         self.trainAction.triggered.connect(self.onInitNetwork)
-        toolbar.addAction(self.trainAction)
+        networkToolbar.addAction(self.trainAction)
 
         predAction = QAction(QIcon(iconPath + "/051-programming.png"), "Predict Random", self)
         predAction.triggered.connect(self.onRandomPred)
-        toolbar.addAction(predAction)
+        networkToolbar.addAction(predAction)
+
 
 
 
@@ -82,6 +105,10 @@ class E_MainWindow(QMainWindow):
 
     def InitManager(self):
         self.Mgr = E_Manager(self)
+
+
+        self.volumeWidget.SetManager(self.Mgr)
+
 
 
     def onImportObject(self):

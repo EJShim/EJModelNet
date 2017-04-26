@@ -170,55 +170,10 @@ class E_Manager:
 
         # self.AddVolumeData(imgstenc.GetOutputPort())
 
-    def AddVolumeData(self, source):
-        self.ClearScene()
-
-        # Prepare color and transparency values
-        colorFunc = vtk.vtkColorTransferFunction()
-        alphaChannelFunc = vtk.vtkPiecewiseFunction()
-        alphaChannelFunc.AddPoint(0, 0.0)
-        alphaChannelFunc.AddPoint(1, 1.0)
-        # alphaChannelFunc.AddPoint(64,0.5)
-        # alphaChannelFunc.AddPoint(128,0.5)
-        # alphaChannelFunc.AddPoint(192,0.5)
-        # alphaChannelFunc.AddPoint(255,1.0)
-
-        colorFunc.AddRGBPoint(0, 0.0, 0.0, 1.0)
-        # colorFunc.AddRGBPoint(128,1.0,0.0,0.0)
-        # colorFunc.AddRGBPoint(192, 1.0,0.0,0.7)
-        colorFunc.AddRGBPoint(255,0.0,1.0,0.0)
-
-        # Prepare volume properties.
-        volumeProperty = vtk.vtkVolumeProperty()
-        volumeProperty.SetColor(colorFunc)
-        volumeProperty.SetScalarOpacity(alphaChannelFunc)
-        volumeProperty.ShadeOn() # Keep this on unless you want everything to look terrible
-        volumeProperty.SetInterpolationTypeToNearest()
-
-
-        #Mapper
-        volumeMapper = vtk.vtkSmartVolumeMapper()
-        volumeMapper.SetInputConnection(source)
-
-        #Actor
-        volume = vtk.vtkVolume()
-        volume.SetMapper(volumeMapper)
-        volume.SetProperty(volumeProperty)
-        volume.SetPosition([0, 0, 0])
-
-
-        #Add Actor
-        self.renderer[1].AddVolume(volume)
-        self.renderer[1].ResetCamera()
-        self.Redraw()
-
     def Redraw(self):
         for i in range(2):
             self.mainFrm.m_vtkWidget[i].GetRenderWindow().Render()
             self.orWidget[i].SetEnabled(1)
-
-
-
 
     def ImportObject(self, path):
         self.SetLog(path)
@@ -393,6 +348,7 @@ class E_Manager:
 
         sample = arrayBuffer.reshape(1, 1, 32, 32, 32)
         dataMatrix = self.MakeDataMatrix( np.asarray(sample, dtype=np.uint8), 255)
+
         data_string = dataMatrix.tostring()
 
 
@@ -403,7 +359,7 @@ class E_Manager:
         dataImporter.SetDataExtent(0, int(dim * v_res)-1, 0, int(dim * v_res)-1, 0, int(dim * v_res)-1)
         dataImporter.SetWholeExtent(0, int(dim * v_res)-1, 0, int(dim * v_res)-1, 0, int(dim * v_res)-1)
 
-        self.AddVolumeData(dataImporter.GetOutputPort())
+        self.VolumeMgr.AddVolumeData(dataImporter.GetOutputPort())
         #Display BoundignBox
         boundingBox = vtk.vtkOutlineFilter()
         boundingBox.SetInputData(dataImporter.GetOutput())
