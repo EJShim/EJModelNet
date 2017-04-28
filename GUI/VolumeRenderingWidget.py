@@ -14,9 +14,12 @@ class E_VolumeRenderingWidget(QWidget):
 
         self.m_widget = QVTKRenderWindowInteractor();
         self.m_widget.setMaximumHeight(100)
+        self.m_widget.AddObserver('MouseMoveEvent', self.onMouseMove)
+        self.m_widget.AddObserver('LeftButtonPressEvent', self.onLeftDown, 1.0)
+        self.m_widget.AddObserver('LeftButtonReleaseEvent', self.onLeftUp, -1.0)
+        self.m_bClicked = False
+
         self.m_view = vtk.vtkContextView()
-
-
         self.m_histogramChart  = vtk.vtkChartXY()
 
         self.Initialize()
@@ -24,10 +27,10 @@ class E_VolumeRenderingWidget(QWidget):
     def SetManager(self, Mgr):
         self.Mgr = Mgr
 
-        
-        #TEST function
-        colorFunc = self.Mgr.VolumeMgr.m_colorFunctions[0]
-        self.SetColorTransferFunction(colorFunc)
+
+        # #TEST function
+        # colorFunc = self.Mgr.VolumeMgr.m_colorFunctions[0]
+        # self.onChangeIndex()
 
     def Initialize(self):
         #CTF Controller
@@ -74,15 +77,46 @@ class E_VolumeRenderingWidget(QWidget):
         self.m_view.Update()
         self.m_view.Render()
 
-    def SetColorTransferFunction(self, colorFunc):
-        self.m_histogramChart.ClearPlots()
 
+    def onChangeIndex(self, idx):
+
+        #Update Preset Function
+        self.Mgr.VolumeMgr.SetPresetFunctions(idx)
+
+        #Plot CTF
+        colorFunc = self.Mgr.VolumeMgr.m_colorFunction
+        self.m_histogramChart.ClearPlots()
         colorPlot = vtk.vtkColorTransferFunctionItem()
         colorPlot.SetColorTransferFunction(colorFunc)
         self.m_histogramChart.AddPlot(colorPlot)
 
-        self.Redraw()
+        #Plot OTF
+        opacityFunc = self.Mgr.VolumeMgr.m_opacityFunction
+        opacPlot = vtk.vtkPiecewiseFunctionItem()
+        opacPlot.SetPiecewiseFunction(opacityFunc)
+        self.m_histogramChart.AddPlot(opacPlot)
 
-    def onChangeIndex(self, idx):
-        colorFunc = self.Mgr.VolumeMgr.m_colorFunctions[idx]
-        self.SetColorTransferFunction(colorFunc)
+        opacityPoint = vtk.vtkPiecewiseControlPointsItem()
+        opacityPoint.SetPiecewiseFunction(opacityFunc)
+        opacityPoint.SetWidth(10.0)
+        self.m_histogramChart.AddPlot(opacityPoint)
+
+        #Recalculate Bounds
+        sRange = self.Mgr.VolumeMgr.m_scalarRange
+        self.m_histogramChart.GetAxis(vtk.vtkAxis.BOTTOM).SetRange(sRange[0], sRange[1])
+        self.m_histogramChart.GetAxis(vtk.vtkAxis.BOTTOM).Update()
+
+        #redraw Plot
+        self.Redraw()
+        self.Mgr.Redraw()
+
+    def onLeftDown(self, obj, event):
+        self.m_bClicked = True;
+
+    def onLeftUp(self, obj, event):
+        self.m_bClicked = False;
+        self.Mgr.Redraw()
+
+    def onMouseMove(self, obj, event):
+        if self.m_bClicked == True:
+            self.Mgr.Redraw()
