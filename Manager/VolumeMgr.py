@@ -81,10 +81,22 @@ class E_VolumeManager:
 
             self.m_volumeMapper.SetBlendModeToComposite()
 
+        elif idx == 3: #Voxel
+            self.m_colorFunction.AddRGBPoint(self.m_scalarRange[0], 0.0, 0.0, 1.0)
+            self.m_colorFunction.AddRGBPoint((self.m_scalarRange[0] + self.m_scalarRange[1])/2.0, 0.0, 1.0, 0.0)
+            self.m_colorFunction.AddRGBPoint(self.m_scalarRange[1], 1.0, 0.0, 0.0)
+
+            self.m_opacityFunction.AddPoint(self.m_scalarRange[0], 0.0)
+            self.m_opacityFunction.AddPoint(self.m_scalarRange[1], 1.0)
+
+            self.m_volumeProperty.ShadeOff()
+            self.m_volumeProperty.SetInterpolationTypeToLinear()
+
+            self.m_volumeMapper.SetBlendModeToMaximumIntensity()
+
 
     def ImportVolume(self, fileSeries):
         volumeBuffer = []
-        vtkVolumeBuffer = []
 
 
         for i in range( len(fileSeries) ):
@@ -102,14 +114,21 @@ class E_VolumeManager:
             # print("spacing :", spacing, "(mm) // position :", position, " // orientation :", orientation, "// Pixel Spacing : ", pixelSpacing)
 
             img = mu.image.numpy
+            shape = img.shape
+            img = img.reshape(shape[1], shape[0])
+            img = np.rot90(img)
+
             volumeBuffer.append(img)
+
 
 
         #Volume ARray
         volumeArray = np.asarray(volumeBuffer, dtype=np.uint16)
-
+        #
+        #
         # plt.imshow(volumeArray[0], cmap="gray")
         # plt.show()
+
 
         self.AddVolume(volumeArray, spacing, pixelSpacing)
 
@@ -121,9 +140,6 @@ class E_VolumeManager:
         imgData.SetDimensions(dim[1], dim[2], dim[0])
         imgData.AllocateScalars(vtk.VTK_UNSIGNED_INT, 1);
         imgData.SetSpacing(pixel[0], pixel[1], spacing)
-
-        print(dim)
-        print(imgData.GetDimensions())
 
         #
         # for i in range(volumeArray.size):
@@ -144,18 +160,6 @@ class E_VolumeManager:
         #update Preset OTF
         self.SetPresetFunctions(self.Mgr.mainFrm.volumeWidget.GetCurrentColorIndex(), True)
 
-
-
-
-        # dataImporter = vtk.vtkImageImport()
-        # dataImporter.CopyImportVoidPointer(data_string, len(data_string))
-        # dataImporter.SetDataScalarTypeToUnsignedChar()
-        # dataImporter.SetNumberOfScalarComponents(1)
-        # dataImporter.SetDataExtent(0, dim[1]-1, 0, dim[2]-1, 0, dim[0]-1)
-        # dataImporter.SetWholeExtent(0, dim[1]-1, 0, dim[2]-1, 0, dim[0]-1)
-        # dataImporter.SetDataSpacing(pixel[0], pixel[1], spacing)
-
-        # print(dataImporter.GetOutput().GetScalarRange())
 
         self.AddVolumeData(imgData, True)
 

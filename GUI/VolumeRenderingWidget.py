@@ -39,8 +39,9 @@ class E_VolumeRenderingWidget(QWidget):
         #Add ComboBox
         self.combo = QComboBox()
         self.combo.addItem("white")
-        self.combo.addItem("Muscle & Bone")
-        self.combo.addItem("Binary Volume")
+        self.combo.addItem("SKIN")
+        self.combo.addItem("BONE")
+        self.combo.addItem("Binary Voxel")
         self.combo.currentIndexChanged.connect( self.onChangeIndex )
 
         self.addWidget(self.combo)

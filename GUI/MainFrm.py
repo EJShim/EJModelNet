@@ -64,7 +64,31 @@ class E_MainWindow(QMainWindow):
         self.volumeWidget = E_VolumeRenderingWidget()
         objectToolbar.addWidget(self.volumeWidget)
 
+        objectToolbar.addSeparator()
 
+
+        checkWidget = QWidget()
+
+        objectToolbar.addWidget(checkWidget)
+        checkLayout = QVBoxLayout()
+        checkWidget.setLayout(checkLayout)
+
+        meshViewCheck = QCheckBox("Mesh View")
+        meshViewCheck.setCheckState(2)
+        meshViewCheck.stateChanged.connect(self.onMeshViewState)
+        checkLayout.addWidget(meshViewCheck)
+
+
+        volumeViewCheck = QCheckBox("Volume View")
+        volumeViewCheck.setCheckState(2)
+        volumeViewCheck.stateChanged.connect(self.onVolumeViewState)
+        checkLayout.addWidget(volumeViewCheck)
+
+
+        sliceViewCheck = QCheckBox("Slice View")
+        sliceViewCheck.setCheckState(0)
+        sliceViewCheck.stateChanged.connect(self.onSliceViewState)
+        checkLayout.addWidget(sliceViewCheck)
 
 
         networkToolbar = QToolBar();
@@ -130,6 +154,21 @@ class E_MainWindow(QMainWindow):
 
     def onInitNetwork(self):
         self.Mgr.InitNetwork()
+        print()
 
     def onRandomPred(self):
         self.Mgr.RandomPrediction()
+
+    def onMeshViewState(self, state):
+        if state == 2: #show
+            self.m_vtkWidget[0].show()
+        else:
+            self.m_vtkWidget[0].hide()
+
+    def onVolumeViewState(self, state):
+        if state == 2: #show
+            self.m_vtkWidget[1].show()
+        else:
+            self.m_vtkWidget[1].hide()
+    def onSliceViewState(self, state):
+        print('slice view', state)
