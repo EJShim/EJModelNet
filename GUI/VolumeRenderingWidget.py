@@ -17,6 +17,7 @@ class E_VolumeRenderingWidget(QWidget):
         self.m_widget.AddObserver('MouseMoveEvent', self.onMouseMove)
         self.m_widget.AddObserver('LeftButtonPressEvent', self.onLeftDown, 1.0)
         self.m_widget.AddObserver('LeftButtonReleaseEvent', self.onLeftUp, -1.0)
+        self.m_widget.hide()
         self.m_bClicked = False
 
         self.m_view = vtk.vtkContextView()
@@ -47,7 +48,10 @@ class E_VolumeRenderingWidget(QWidget):
         self.addWidget(self.combo)
 
         #OTF Controller
-        self.addWidget(QLabel("Volume OTF"))
+        onOffVolumeOTF = QCheckBox("Volume OTF")
+        onOffVolumeOTF.setCheckState(0)
+        onOffVolumeOTF.stateChanged.connect(self.onVolumeOTFState)
+        self.addWidget(onOffVolumeOTF)
 
 
         #Initialize Histogram
@@ -110,6 +114,13 @@ class E_VolumeRenderingWidget(QWidget):
         #redraw Plot
         self.Redraw()
         self.Mgr.Redraw()
+
+    def onVolumeOTFState(self, state):
+        if state == 2:
+            self.m_widget.show()
+        else:
+            self.m_widget.hide()
+
 
     def onLeftDown(self, obj, event):
         self.m_bClicked = True;

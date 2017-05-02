@@ -89,10 +89,10 @@ class E_VolumeManager:
             self.m_opacityFunction.AddPoint(self.m_scalarRange[0], 0.0)
             self.m_opacityFunction.AddPoint(self.m_scalarRange[1], 1.0)
 
-            self.m_volumeProperty.ShadeOff()
+            self.m_volumeProperty.ShadeOn()
             self.m_volumeProperty.SetInterpolationTypeToLinear()
 
-            self.m_volumeMapper.SetBlendModeToMaximumIntensity()
+            self.m_volumeMapper.SetBlendModeToComposite()
 
 
     def ImportVolume(self, fileSeries):
@@ -157,9 +157,9 @@ class E_VolumeManager:
                     imgData.SetScalarComponentFromDouble(k, j, i, 0, volumeArray[i][k][j])
 
         self.m_scalarRange = imgData.GetScalarRange()
-        #update Preset OTF
-        self.SetPresetFunctions(self.Mgr.mainFrm.volumeWidget.GetCurrentColorIndex(), True)
 
+
+        #update Preset OTF
 
         self.AddVolumeData(imgData, True)
 
@@ -187,4 +187,7 @@ class E_VolumeManager:
         #Add Actor
         self.Mgr.renderer[1].AddVolume(self.m_volume)
         self.Mgr.renderer[1].ResetCamera()
+
+        #Set preset
+        self.Mgr.mainFrm.volumeWidget.onChangeIndex(self.Mgr.mainFrm.volumeWidget.GetCurrentColorIndex())
         self.Mgr.Redraw()

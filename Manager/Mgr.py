@@ -24,8 +24,8 @@ dim = 32
 #define argument path
 curPath = os.path.dirname(os.path.realpath(__file__))
 rootPath = os.path.abspath(os.path.join(curPath, os.pardir))
-weightPath = rootPath + "\\NetworkData\\VRN.npz"
-modelPath = rootPath + "\\NetworkData\\modelnet40_rot_test.npz"
+weightPath = rootPath + "\\NetworkData\\weights\\VRN.npz"
+modelPath = rootPath + "\\NetworkData\\data\\modelnet40_rot_test.npz"
 
 class E_Manager:
     def __init__(self, mainFrm):
@@ -228,7 +228,7 @@ class E_Manager:
 
     def InitNetwork(self):
         self.SetLog("Import Pre-trained Network..")
-        import NetworkData.VRN as config_module
+        import NetworkData.graph.VRN as config_module
         # config_module = __import__('VRN', weightPath[:-3])
 
 
